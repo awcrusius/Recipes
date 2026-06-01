@@ -28,6 +28,23 @@ under `recipes/`. The site auto-publishes via GitHub Pages.
 5. Each ingredient line must start with its quantity, then (optionally) a unit,
    then the ingredient name — e.g. `- 90 g white sugar`, `- 2 cups flour`,
    `- 2 garlic cloves, minced`. The scaler/converter parses this.
+6. Under each numbered instruction step, add a **nested bullet list** of the
+   ingredients used in that step, in the same `qty unit name` format. These render
+   as a "You'll use" callout and **auto-scale / unit-convert** with the controls
+   (the layout parses them too). Example:
+
+   ```markdown
+   1. **Dissolve the sugar** — Combine the sugar and water…
+      - 90 g white sugar
+      - 140 mL water
+   ```
+
+   - Indent the sub-bullets 3 spaces (to align under `N. `).
+   - List each ingredient once, at the step where it is first used; omit the
+     sub-list for steps that introduce no new ingredient (e.g. "Cool", "Bottle").
+   - **Part of the whole:** if a step uses only a portion, give the partial amount
+     plus a *relative* note — `- 30 g cilantro (½ of total)` or `- 1 clove (half)`.
+     Never use an absolute denominator like `1 of 2`; the `2` would not scale.
 
 ## Ingredient scaling & units (applies to ALL recipes)
 The recipe layout (`_layouts/recipe.html`) renders two controls on every recipe:

@@ -22,10 +22,15 @@ description: "A simple, warming Japanese soup made with dashi, white miso, silke
 ## Instructions
 
 1. Soak the dried wakame in cold water for 5 minutes, then drain and gently squeeze out excess water.
+   - 2 tbsp dried wakame seaweed
 2. Heat the dashi stock in a medium saucepan over medium heat until just below boiling — do not boil.
-3. Add the tofu cubes and wakame. Gently simmer for 2 minutes.
+   - 4 cups dashi stock (or water with 1 tsp instant dashi granules)
+3. Add the tofu cubes and the soaked wakame. Gently simmer for 2 minutes.
+   - 150 g silken tofu, cut into small cubes
 4. Ladle a small amount of hot dashi into a bowl with the miso paste and whisk until fully dissolved. Pour the dissolved miso back into the pot and stir to combine. Do not let the soup boil after adding miso.
+   - 3 tbsp white (shiro) miso paste
 5. Ladle into bowls and garnish with green onions. Serve immediately.
+   - 2 green onions, thinly sliced
 
 ## Notes
 
