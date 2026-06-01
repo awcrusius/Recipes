@@ -1,0 +1,23 @@
+title: Recipe Collection
+description: A collection of recipes from around the world.
+baseurl: "/Recipes"
+url: "https://awcrusius.github.io"
+
+theme:
+
+permalink: pretty
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+exclude:
+  - CLAUDE.md
+  - Gemfile
+  - Gemfile.lock
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
