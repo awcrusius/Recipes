@@ -312,14 +312,46 @@ a:hover { text-decoration: underline; }
   color: #fff;
 }
 
-.custom-scale {
-  width: 4.5rem;
-  padding: 0.3rem 0.45rem;
-  font-size: 0.9rem;
+/* Scale stepper: ( − ×1 + ) */
+.scale-stepper {
+  display: inline-flex;
+  align-items: center;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+  overflow: hidden;
+  background: #fff;
+}
+
+.scale-stepper button {
+  width: 2rem;
+  padding: 0.3rem 0;
+  font-size: 1.1rem;
+  line-height: 1;
   font-family: var(--font);
+  border: none;
+  background: #fff;
+  color: var(--color-accent);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.scale-stepper button:hover { background: var(--color-accent-light); }
+
+.scale-stepper button:disabled {
+  color: var(--color-border);
+  cursor: not-allowed;
+  background: #fff;
+}
+
+.scale-value {
+  min-width: 3rem;
+  padding: 0.3rem 0.4rem;
   text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  font-variant-numeric: tabular-nums;
 }
 
 .yield-readout {
@@ -428,23 +460,37 @@ a:hover { text-decoration: underline; }
 .allergen-tag {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  background: #fff3e0;
-  color: #7a4100;
-  border: 1px solid #f5c07a;
-  padding: 0.2rem 0.65rem 0.2rem 0.45rem;
+  gap: 0.35rem;
+  background: var(--color-tag-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: 0.25rem 0.7rem 0.25rem 0.5rem;
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 500;
+  text-transform: capitalize;
 }
 
+/* Single-color line icon: strokes follow currentColor */
 .allergen-icon {
-  font-size: 0.88rem;
-  line-height: 1;
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--color-text);
 }
 
-/* Ingredient checkboxes */
-.ingredients-list > li {
+/* Ingredient checkboxes: no bullets, just the checkbox + text */
+.recipe-body ul.ingredients-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.recipe-body ul.ingredients-list > li {
   list-style: none;
   padding-left: 0;
 }
