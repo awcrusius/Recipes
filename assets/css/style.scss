@@ -244,6 +244,18 @@ a:hover { text-decoration: underline; }
   font-size: 0.78rem;
 }
 
+/* Yield / makes line */
+.recipe-yield {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  color: var(--color-muted);
+}
+
+.recipe-yield .yield-amount {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
 /* Recipe controls: scale + units */
 .recipe-controls {
   display: flex;

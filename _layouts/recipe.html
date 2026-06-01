@@ -69,6 +69,11 @@
         </div>
       {% endif %}
 
+      {% assign recipe_yield = page.yield | default: page.makes %}
+      {% if recipe_yield %}
+        <p class="recipe-yield">Makes <span class="yield-amount" data-yield="{{ recipe_yield }}">{{ recipe_yield }}</span></p>
+      {% endif %}
+
       <div class="recipe-controls no-print" data-base-servings="{{ page.servings | default: 4 }}">
         <div class="control-group">
           <span class="control-label">Scale</span>
@@ -185,13 +190,13 @@
       var metricCount = 0, imperialCount = 0;
       function markSystem(u) { if (IMPERIAL_UNITS[u]) imperialCount++; else metricCount++; }
 
-      // ---- Parse a single ingredient <li> ----------------------------------
+      // ---- Parse a "quantity unit name" string -----------------------------
       // tally: only the main ingredient list should influence the default
-      // metric/imperial choice (per-step lines duplicate it).
-      function parseIngredient(li, tally) {
-        var text = li.textContent.replace(/\s+/g, ' ').trim();
+      // metric/imperial choice (per-step lines & yield duplicate/don't count).
+      function parseQtyUnitName(text, tally) {
+        text = (text || '').replace(/\s+/g, ' ').trim();
         var m = text.match(qtyPattern);
-        if (!m) return { li: li, qty: null, raw: text };
+        if (!m) return { qty: null, raw: text };
 
         var qty = parseQty(m[0].trim());
         var rest = text.slice(m[0].length).replace(/^\s+/, '');
@@ -220,12 +225,28 @@
         }
 
         return {
-          li: li,
           qty: qty,
           dim: dim,                       // 'mass' | 'volume' | null (count)
           base: dim ? qty * baseFactor : null, // canonical g or mL at x1
           name: name.replace(/^\s+/, '')
         };
+      }
+
+      // Parse an ingredient <li>, keeping a reference to the element to update.
+      function parseIngredient(li, tally) {
+        var r = parseQtyUnitName(li.textContent, tally);
+        r.li = li;
+        return r;
+      }
+
+      // Render a parsed amount to a display string for the given scale/system.
+      function renderAmount(p, scaleFactor, system) {
+        if (p.qty === null) return p.raw;
+        if (p.dim) {
+          var c = present(p.dim, p.base, scaleFactor, system);
+          return format(c.qty, c.unit) + ' ' + c.unit + (p.name ? ' ' + p.name : '');
+        }
+        return format(p.qty * scaleFactor, null) + (p.name ? ' ' + p.name : '');
       }
 
       // ---- Parse the main ingredient list ----------------------------------
@@ -300,32 +321,31 @@
         return { qty: v, unit: 'mL' };
       }
 
+      // ---- Optional yield / makes amount -----------------------------------
+      var yieldEl = document.querySelector('.yield-amount');
+      var yieldData = yieldEl ? parseQtyUnitName(yieldEl.getAttribute('data-yield'), false) : null;
+
       // ---- Render -----------------------------------------------------------
       var state = { scale: 1, system: imperialCount > metricCount ? 'imperial' : 'metric' };
 
       function render() {
         parsed.forEach(function (ing) {
           if (ing.qty === null) return; // no leading quantity, leave untouched
-          var qtyStr, suffix;
-          if (ing.dim) {
-            var p = present(ing.dim, ing.base, state.scale, state.system);
-            qtyStr = format(p.qty, p.unit);
-            suffix = ' ' + p.unit + (ing.name ? ' ' + ing.name : '');
-          } else {
-            qtyStr = format(ing.qty * state.scale, null);
-            suffix = ing.name ? ' ' + ing.name : '';
-          }
-          ing.li.textContent = qtyStr + suffix;
+          ing.li.textContent = renderAmount(ing, state.scale, state.system);
         });
         updateYield();
       }
 
       function updateYield() {
         var readout = document.getElementById('yield-readout');
-        if (!readout) return;
-        var n = baseServings * state.scale;
-        var rounded = parseFloat(n.toFixed(2)).toString();
-        readout.textContent = '≈ ' + rounded + ' serving' + (n === 1 ? '' : 's');
+        if (readout) {
+          var n = baseServings * state.scale;
+          var rounded = parseFloat(n.toFixed(2)).toString();
+          readout.textContent = '≈ ' + rounded + ' serving' + (n === 1 ? '' : 's');
+        }
+        if (yieldEl && yieldData && yieldData.qty !== null) {
+          yieldEl.textContent = renderAmount(yieldData, state.scale, state.system);
+        }
       }
 
       // ---- Wire up the controls --------------------------------------------
