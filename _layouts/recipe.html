@@ -347,11 +347,24 @@
       }
 
       // ---- Optional yield / makes -------------------------------------------
-      // The total yield lives on the servings readout; per-serving size is the
-      // total divided by the base servings (so it stays constant as you scale).
+      // The total yield is authored on the servings readout. We derive the
+      // per-serving size ONCE from the exact total ÷ exact base servings and
+      // keep that as the source of truth, so the rounded servings *count* shown
+      // to the user never feeds back into the math. The overall output at any
+      // scale is then perServing × (exact servings) = perServing × baseServings × scale.
       var readoutEl = document.getElementById('yield-readout');
       var yieldRaw = readoutEl ? readoutEl.getAttribute('data-yield') : null;
-      var yieldData = yieldRaw ? parseQtyUnitName(yieldRaw, false) : null;
+      var totalYield = yieldRaw ? parseQtyUnitName(yieldRaw, false) : null;
+
+      var perServing = null;
+      if (totalYield && totalYield.qty !== null && baseServings > 0) {
+        perServing = {
+          qty: totalYield.qty / baseServings,
+          dim: totalYield.dim,
+          base: totalYield.base !== null ? totalYield.base / baseServings : null,
+          name: totalYield.name
+        };
+      }
 
       // ---- Render -----------------------------------------------------------
       var state = { scale: 1, system: imperialCount > metricCount ? 'imperial' : 'metric' };
@@ -367,12 +380,12 @@
 
       function updateYield() {
         if (!readoutEl) return;
-        var n = baseServings * state.scale;
-        var rounded = parseFloat(n.toFixed(2)).toString();
+        var n = baseServings * state.scale;            // exact servings at this scale
+        var rounded = parseFloat(n.toFixed(2)).toString(); // rounded for display only
         var text = '≈ ' + rounded + ' serving' + (n === 1 ? '' : 's');
-        if (yieldData && yieldData.qty !== null && baseServings > 0) {
-          // 1 / baseServings turns the total yield into a single serving's size.
-          text += ' (' + renderAmount(yieldData, 1 / baseServings, state.system) + ' each)';
+        if (perServing) {
+          // Per-serving size is scale-invariant; render the stored exact value.
+          text += ' (' + renderAmount(perServing, 1, state.system) + ' each)';
         }
         readoutEl.textContent = text;
       }
