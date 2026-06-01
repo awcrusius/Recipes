@@ -25,11 +25,20 @@ description: "A pantry-staple Italian classic — silky spaghetti tossed with go
 ## Instructions
 
 1. Bring a large pot of water to a boil. Add salt and cook spaghetti until al dente according to package directions. Reserve 1 cup of pasta cooking water before draining.
+   - 400 g spaghetti
+   - 1 tsp salt (for pasta water)
 2. While the pasta cooks, heat olive oil in a large skillet over medium-low heat. Add the sliced garlic and cook, stirring often, until golden — about 4 to 5 minutes. Do not let it burn.
+   - 1/2 cup extra-virgin olive oil
+   - 6 cloves garlic, thinly sliced
 3. Add the chili flakes and cook for 30 seconds more.
+   - 1/2 tsp red chili flakes
 4. Add the drained pasta to the skillet along with a splash of the reserved pasta water. Toss vigorously over medium heat until the sauce coats the noodles, adding more pasta water as needed to achieve a silky consistency.
+   - reserved pasta water, as needed
 5. Remove from heat, stir in the parsley, and season with black pepper.
+   - 1/4 cup fresh flat-leaf parsley, chopped
+   - freshly ground black pepper, to taste
 6. Serve immediately, with Parmesan if desired.
+   - freshly grated Parmesan, to serve (optional)
 
 ## Notes
 

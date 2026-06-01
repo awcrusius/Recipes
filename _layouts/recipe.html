@@ -185,8 +185,10 @@
       var metricCount = 0, imperialCount = 0;
       function markSystem(u) { if (IMPERIAL_UNITS[u]) imperialCount++; else metricCount++; }
 
-      // ---- Parse every ingredient once -------------------------------------
-      var parsed = items.map(function (li) {
+      // ---- Parse a single ingredient <li> ----------------------------------
+      // tally: only the main ingredient list should influence the default
+      // metric/imperial choice (per-step lines duplicate it).
+      function parseIngredient(li, tally) {
         var text = li.textContent.replace(/\s+/g, ' ').trim();
         var m = text.match(qtyPattern);
         if (!m) return { li: li, qty: null, raw: text };
@@ -205,15 +207,15 @@
           if (u1 === 'fl' && flMatch && normUnit(flMatch[1]) === 'oz') {
             dim = 'volume'; baseFactor = VOLUME['floz'];
             name = flMatch[2] || '';
-            markSystem('floz');
+            if (tally) markSystem('floz');
           } else if (MASS[u1]) {
             dim = 'mass'; baseFactor = MASS[u1];
             name = remainder;
-            markSystem(u1);
+            if (tally) markSystem(u1);
           } else if (VOLUME[u1]) {
             dim = 'volume'; baseFactor = VOLUME[u1];
             name = remainder;
-            markSystem(u1);
+            if (tally) markSystem(u1);
           }
         }
 
@@ -224,7 +226,30 @@
           base: dim ? qty * baseFactor : null, // canonical g or mL at x1
           name: name.replace(/^\s+/, '')
         };
-      });
+      }
+
+      // ---- Parse the main ingredient list ----------------------------------
+      var parsed = items.map(function (li) { return parseIngredient(li, true); });
+
+      // ---- Also parse per-step ingredient sub-lists ------------------------
+      // Steps may carry a nested <ul> of the ingredients used in that step.
+      // Find the Instructions <ol>, then its nested "ol > li > ul > li" items.
+      var instructionsList = null;
+      for (var h = 0; h < headers.length; h++) {
+        if (/instructions/i.test(headers[h].textContent)) {
+          var n2 = headers[h].nextElementSibling;
+          while (n2 && n2.tagName !== 'OL' && n2.tagName !== 'UL') {
+            n2 = n2.nextElementSibling;
+          }
+          instructionsList = n2;
+          break;
+        }
+      }
+      if (instructionsList) {
+        instructionsList.querySelectorAll(':scope > li > ul > li').forEach(function (li) {
+          parsed.push(parseIngredient(li, false));
+        });
+      }
 
       // ---- Number formatting ------------------------------------------------
       var FRACTIONS = [[1,8],[1,4],[1,3],[3,8],[1,2],[5,8],[2,3],[3,4],[7,8]];

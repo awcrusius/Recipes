@@ -349,6 +349,41 @@ a:hover { text-decoration: underline; }
 
 .recipe-body p { margin: 0 0 1rem; }
 
+/* Per-step ingredient callout: nested <ul> inside an Instructions <ol> item */
+.recipe-body ol > li > ul {
+  list-style: none;
+  margin: 0.5rem 0 0.9rem;
+  padding: 0.5rem 0.75rem 0.55rem 1.6rem;
+  background: var(--color-accent-light);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius);
+  font-size: 0.88rem;
+}
+
+.recipe-body ol > li > ul::before {
+  content: "You'll use";
+  display: block;
+  margin: 0 0 0.25rem -0.85rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.recipe-body ol > li > ul li {
+  position: relative;
+  margin-bottom: 0.15rem;
+  color: var(--color-text);
+}
+
+.recipe-body ol > li > ul li::before {
+  content: "•";
+  position: absolute;
+  left: -0.85rem;
+  color: var(--color-accent);
+}
+
 .recipe-nav {
   margin-top: 2rem;
   padding-top: 1rem;
