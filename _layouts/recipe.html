@@ -105,7 +105,7 @@
             <span class="scale-field">
               <span class="scale-times" aria-hidden="true">&times;</span>
               <input type="text" inputmode="decimal" class="scale-value" id="scale-value"
-                     value="1" size="4" aria-label="Scale factor" autocomplete="off">
+                     value="1" size="5" aria-label="Scale factor" autocomplete="off">
             </span>
             <button type="button" id="scale-plus" aria-label="Increase scale">+</button>
           </div>
@@ -398,6 +398,13 @@
         return Number.isInteger(n) ? String(n) : parseFloat(n.toFixed(2)).toString();
       }
 
+      // Grow the input to fit its content, but never narrower than "00000".
+      var SCALE_MIN_CHARS = 5;
+      function sizeScaleInput() {
+        var len = Math.max(scaleValue.value.length, SCALE_MIN_CHARS);
+        scaleValue.style.width = len + 'ch';
+      }
+
       function stepScale(cur, dir) {
         if (cur >= 2) {
           if (dir > 0) return cur + 1;          // 2 → 3 → 4 …
@@ -420,6 +427,7 @@
       function setScale(v) {
         applyScale(v);
         scaleValue.value = fmtScale(v);
+        sizeScaleInput();
       }
 
       scaleMinus.addEventListener('click', function () { setScale(stepScale(state.scale, -1)); });
@@ -427,6 +435,7 @@
 
       // Free-form typing: live-update on input, normalise/revert on commit.
       scaleValue.addEventListener('input', function () {
+        sizeScaleInput();
         var v = parseFloat(scaleValue.value);
         if (!isNaN(v) && v > 0) applyScale(v);
       });

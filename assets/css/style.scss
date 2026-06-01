@@ -365,9 +365,10 @@ a:hover { text-decoration: underline; }
 
 .scale-value {
   flex: 0 0 auto;
-  width: 3.6ch;       /* fits a 4-digit string, e.g. 0000 */
-  min-width: 0;       /* override flex item's intrinsic min-width */
-  padding: 0.3rem 0.1rem;
+  box-sizing: content-box;  /* width below is the content area only */
+  width: 5ch;               /* JS grows this to fit longer values */
+  min-width: 5ch;           /* never narrower than "00000" */
+  padding: 0.3rem 1ch;      /* ~one "0" of breathing room each side */
   text-align: center;
   font-size: 0.95rem;
   font-weight: 600;
