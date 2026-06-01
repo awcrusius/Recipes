@@ -364,7 +364,9 @@ a:hover { text-decoration: underline; }
 }
 
 .scale-value {
-  width: 2.4rem;
+  flex: 0 0 auto;
+  width: 2.6ch;       /* fits up to 3 digits, e.g. 100 */
+  min-width: 0;       /* override flex item's intrinsic min-width */
   padding: 0.3rem 0.1rem;
   text-align: center;
   font-size: 0.95rem;
