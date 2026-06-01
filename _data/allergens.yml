@@ -1,16 +1,21 @@
-wheat: "🌾"
-gluten: "🌾"
-soy: "🫘"
-dairy: "🥛"
-milk: "🥛"
-eggs: "🥚"
-egg: "🥚"
-nuts: "🌰"
-tree-nuts: "🌰"
-peanuts: "🥜"
-peanut: "🥜"
-fish: "🐟"
-shellfish: "🦐"
-sesame: "🌱"
-mustard: "🌻"
-celery: "🥬"
+# Maps an allergen name (as used in a recipe's `allergens:` frontmatter) to the
+# id of its line icon in _includes/allergen-icons.svg. Aliases point to the same
+# icon. Unknown allergens fall back to the generic warning icon.
+wheat: wheat
+gluten: wheat
+soy: soy
+soya: soy
+dairy: milk
+milk: milk
+eggs: egg
+egg: egg
+nuts: nut
+tree-nuts: nut
+peanuts: peanut
+peanut: peanut
+fish: fish
+shellfish: shellfish
+crustaceans: shellfish
+sesame: sesame
+mustard: mustard
+celery: celery
