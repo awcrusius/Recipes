@@ -19,10 +19,15 @@ under `recipes/`. The site auto-publishes via GitHub Pages.
    prep_time: 15
    cook_time: 30
    total_time: 45
+   yield: "250 mL"      # optional; see "Yield / makes" below
    tags: [tag1, tag2]
    description: "Brief description."
    ---
    ```
+
+   The `yield` field is optional (`makes` works as an alias). When present it
+   must start with a number so it can scale/convert — e.g. `"250 mL"`,
+   `"12 cookies"`, `"1.5 L"`. See "Yield / makes" below.
 
 4. Write `## Ingredients` and `## Instructions` sections below the frontmatter.
 5. Each ingredient line must start with its quantity, then (optionally) a unit,
@@ -63,6 +68,16 @@ Author ingredients so this works:
   - **Volume:** `mL`, `L`, `tsp`, `tbsp`, `cup`, `fl oz`
 - Count-based items (no unit — e.g. `2 garlic cloves`, `2 chillies`) are scaled
   but never unit-converted.
+
+## Yield / makes (applies to ALL recipes)
+If a recipe declares a `yield` (or `makes`) frontmatter field, the layout shows a
+**Makes** line that **scales and unit-converts** with the controls, exactly like an
+ingredient. Author it as a quantity-first string so it parses:
+- `yield: "250 mL"` → shows `Makes 250 mL`, becomes `Makes 500 mL` at ×2, and
+  `Makes 1.06 cup` under Imperial.
+- `yield: "12 cookies"` → count-based; scales to `24 cookies` at ×2 (never converted).
+Recipes without the field simply omit the Makes line. Do **not** also hard-code a
+static "Yield:" line in the body — the dynamic field replaces it.
 
 ## Cuisines (folder names)
 - italian
