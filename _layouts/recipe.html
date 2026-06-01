@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title }} | {{ site.title }}</title>
+  <meta name="description" content="{{ page.description }}">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+  {% seo %}
+  {% feed_meta %}
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="{{ '/' | relative_url }}" class="site-title">{{ site.title }}</a>
+      <nav class="site-nav">
+        <a href="{{ '/' | relative_url }}">Home</a>
+        <a href="{{ '/recipes/' | append: page.cuisine | append: '/' | relative_url }}">{{ page.cuisine | capitalize }}</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="recipe">
+      <h1 class="recipe-title">{{ page.title }}</h1>
+
+      {% if page.description %}
+        <p class="recipe-description">{{ page.description }}</p>
+      {% endif %}
+
+      <div class="recipe-meta">
+        {% if page.prep_time %}
+          <div class="meta-item">
+            <span class="meta-label">Prep</span>
+            <span class="meta-value">{{ page.prep_time }} min</span>
+          </div>
+        {% endif %}
+        {% if page.cook_time %}
+          <div class="meta-item">
+            <span class="meta-label">Cook</span>
+            <span class="meta-value">{{ page.cook_time }} min</span>
+          </div>
+        {% endif %}
+        {% if page.total_time %}
+          <div class="meta-item">
+            <span class="meta-label">Total</span>
+            <span class="meta-value">{{ page.total_time }} min</span>
+          </div>
+        {% endif %}
+        {% if page.cuisine %}
+          <div class="meta-item">
+            <span class="meta-label">Cuisine</span>
+            <span class="meta-value">{{ page.cuisine | capitalize }}</span>
+          </div>
+        {% endif %}
+        {% if page.meal_type %}
+          <div class="meta-item">
+            <span class="meta-label">Meal</span>
+            <span class="meta-value">{{ page.meal_type | capitalize }}</span>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if page.tags %}
+        <div class="recipe-tags">
+          {% for tag in page.tags %}
+            <span class="tag">{{ tag }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="serving-scaler no-print">
+        <label for="servings">Servings:</label>
+        <input
+          type="number"
+          id="servings"
+          value="{{ page.servings | default: 4 }}"
+          min="1"
+          max="100"
+          data-base="{{ page.servings | default: 4 }}"
+        >
+        <button onclick="window.print()" class="print-btn">Print Recipe</button>
+      </div>
+
+      <div class="recipe-body">
+        {{ content }}
+      </div>
+    </article>
+
+    <div class="recipe-nav no-print">
+      <a href="{{ '/recipes/' | append: page.cuisine | append: '/' | relative_url }}">&larr; More {{ page.cuisine | capitalize }} recipes</a>
+      &nbsp;|&nbsp;
+      <a href="{{ '/' | relative_url }}">All categories</a>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; {{ site.time | date: "%Y" }} {{ site.title }}</p>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var input = document.getElementById('servings');
+      if (!input) return;
+
+      var baseServings = parseFloat(input.getAttribute('data-base')) || 4;
+
+      // Find the ingredients list: first <ul> after an <h2> containing "Ingredients"
+      var headers = document.querySelectorAll('.recipe-body h2');
+      var ingredientsList = null;
+      for (var i = 0; i < headers.length; i++) {
+        if (/ingredients/i.test(headers[i].textContent)) {
+          var next = headers[i].nextElementSibling;
+          while (next && next.tagName !== 'UL' && next.tagName !== 'OL') {
+            next = next.nextElementSibling;
+          }
+          if (next) {
+            ingredientsList = next;
+          }
+          break;
+        }
+      }
+
+      if (!ingredientsList) return;
+
+      var items = ingredientsList.querySelectorAll('li');
+
+      // Parse leading number or fraction from text (e.g. "2", "1/2", "1 1/2")
+      var fractionMap = {
+        '½': 0.5, '⅓': 1/3, '⅔': 2/3, '¼': 0.25, '¾': 0.75,
+        '⅛': 0.125, '⅜': 0.375, '⅝': 0.625, '⅞': 0.875
+      };
+
+      function parseFraction(str) {
+        str = str.trim();
+        // Unicode fractions
+        for (var uc in fractionMap) {
+          if (str === uc) return fractionMap[uc];
+        }
+        // Slash fraction like "1/2"
+        var slashMatch = str.match(/^(\d+)\/(\d+)$/);
+        if (slashMatch) return parseInt(slashMatch[1]) / parseInt(slashMatch[2]);
+        // Plain number
+        var num = parseFloat(str);
+        if (!isNaN(num)) return num;
+        return null;
+      }
+
+      // Leading quantity pattern: optional whole number, optional fraction/slash-fraction
+      // Captures: "2", "1/2", "1 1/2", "½", "2½"
+      var qtyPattern = /^(\d+\s+\d+\/\d+|\d+\/\d+|\d+[½⅓⅔¼¾⅛⅜⅝⅞]|\d+\.\d+|\d+|[½⅓⅔¼¾⅛⅜⅝⅞])/u;
+
+      // Store original text for each item
+      var originals = Array.prototype.map.call(items, function (li) {
+        return li.textContent;
+      });
+
+      function formatNumber(n) {
+        // Return as fraction string if close to common fractions, else decimal
+        var fracs = [
+          [1, 8], [1, 4], [1, 3], [3, 8], [1, 2],
+          [5, 8], [2, 3], [3, 4], [7, 8]
+        ];
+        // Try to express as whole + fraction
+        var whole = Math.floor(n);
+        var rem = n - whole;
+        if (rem < 0.04) return whole === 0 ? '' : String(whole);
+        for (var i = 0; i < fracs.length; i++) {
+          var f = fracs[i][0] / fracs[i][1];
+          if (Math.abs(rem - f) < 0.04) {
+            var fracStr = fracs[i][0] + '/' + fracs[i][1];
+            return whole > 0 ? whole + ' ' + fracStr : fracStr;
+          }
+        }
+        // Fallback: one decimal place, trim trailing zero
+        var rounded = Math.round(n * 10) / 10;
+        return String(rounded);
+      }
+
+      function scale(newServings) {
+        var ratio = newServings / baseServings;
+        items.forEach(function (li, idx) {
+          var orig = originals[idx];
+          var match = orig.match(qtyPattern);
+          if (!match) return; // no leading quantity, leave unchanged
+          var qtyStr = match[0].trim();
+          // Parse possibly compound quantity like "1 1/2"
+          var compoundMatch = qtyStr.match(/^(\d+)\s+(\d+\/\d+)$/);
+          var baseQty;
+          if (compoundMatch) {
+            baseQty = parseInt(compoundMatch[1]) + parseFraction(compoundMatch[2]);
+          } else {
+            baseQty = parseFraction(qtyStr);
+          }
+          if (baseQty === null || baseQty === 0) return;
+          var scaled = baseQty * ratio;
+          var formatted = formatNumber(scaled);
+          // Replace the original quantity text in the ingredient string
+          li.textContent = formatted + (formatted ? orig.slice(match[0].length) : orig.slice(match[0].length));
+        });
+      }
+
+      input.addEventListener('input', function () {
+        var v = parseFloat(input.value);
+        if (!isNaN(v) && v > 0) scale(v);
+      });
+    })();
+  </script>
+</body>
+</html>
