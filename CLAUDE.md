@@ -41,6 +41,7 @@ under `recipes/`. The site auto-publishes via GitHub Pages.
 - american
 - korean
 - spanish
+- vietnamese
 
 ## Serving scaler
 Implemented in `_layouts/recipe.html` with vanilla JS. It parses leading
