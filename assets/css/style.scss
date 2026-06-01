@@ -365,35 +365,16 @@ a:hover { text-decoration: underline; }
 .recipe-body ol > li > ul {
   list-style: none;
   margin: 0.5rem 0 0.9rem;
-  padding: 0.5rem 0.75rem 0.55rem 1.6rem;
+  padding: 0.45rem 0.75rem 0.45rem 0.85rem;
   background: var(--color-accent-light);
   border-left: 3px solid var(--color-accent);
   border-radius: var(--radius);
   font-size: 0.88rem;
 }
 
-.recipe-body ol > li > ul::before {
-  content: "You'll use";
-  display: block;
-  margin: 0 0 0.25rem -0.85rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-accent);
-}
-
 .recipe-body ol > li > ul li {
-  position: relative;
   margin-bottom: 0.15rem;
   color: var(--color-text);
-}
-
-.recipe-body ol > li > ul li::before {
-  content: "•";
-  position: absolute;
-  left: -0.85rem;
-  color: var(--color-accent);
 }
 
 .recipe-nav {
@@ -421,10 +402,81 @@ a:hover { text-decoration: underline; }
   a { color: inherit; text-decoration: none; }
 }
 
+/* Recipe photo */
+.recipe-photo {
+  margin: 0 0 1.25rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  max-height: 420px;
+}
+
+.recipe-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Allergen tags */
+.allergen-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.allergen-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #fff3e0;
+  color: #7a4100;
+  border: 1px solid #f5c07a;
+  padding: 0.2rem 0.65rem 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.allergen-icon {
+  font-size: 0.88rem;
+  line-height: 1;
+}
+
+/* Ingredient checkboxes */
+.ingredients-list > li {
+  list-style: none;
+  padding-left: 0;
+}
+
+.ing-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  cursor: pointer;
+  padding: 0.1rem 0;
+}
+
+.ing-check {
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: var(--color-accent);
+}
+
+.ing-row:has(.ing-check:checked) .ing-text {
+  text-decoration: line-through;
+  color: var(--color-muted);
+  opacity: 0.7;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .recipe-title { font-size: 1.5rem; }
   .category-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   .recipe-controls { gap: 0.65rem; }
   .print-btn { margin-left: 0; width: 100%; }
+  .recipe-photo { max-height: 260px; }
 }

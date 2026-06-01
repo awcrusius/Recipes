@@ -21,6 +21,8 @@ under `recipes/`. The site auto-publishes via GitHub Pages.
    total_time: 45
    yield: "250 mL"      # optional; see "Yield / makes" below
    tags: [tag1, tag2]
+   allergens: [wheat, soy]  # optional; renders as icon pills below the tags
+   photo: "filename.jpg"    # optional; stored in assets/images/recipes/<cuisine>/
    description: "Brief description."
    ---
    ```
@@ -35,7 +37,7 @@ under `recipes/`. The site auto-publishes via GitHub Pages.
    `- 2 garlic cloves, minced`. The scaler/converter parses this.
 6. Under each numbered instruction step, add a **nested bullet list** of the
    ingredients used in that step, in the same `qty unit name` format. These render
-   as a "You'll use" callout and **auto-scale / unit-convert** with the controls
+   as an ingredient callout box and **auto-scale / unit-convert** with the controls
    (the layout parses them too). Example:
 
    ```markdown
@@ -54,8 +56,8 @@ under `recipes/`. The site auto-publishes via GitHub Pages.
 ## Ingredient scaling & units (applies to ALL recipes)
 The recipe layout (`_layouts/recipe.html`) renders two controls on every recipe:
 
-- **Scale** — preset multipliers `×0.5`, `×1`, `×2`, `×3`, plus **Custom** (any
-  factor). All ingredient quantities update live.
+- **Scale** — preset multipliers `×0.5`, `×1`, `×2`, plus **Custom** (any factor).
+  All ingredient quantities update live.
 - **Units** — a **Metric / Imperial** toggle that converts each ingredient's
   quantity to the chosen system. The default follows whichever system most of the
   recipe's units are authored in.
@@ -78,6 +80,18 @@ ingredient. Author it as a quantity-first string so it parses:
 - `yield: "12 cookies"` → count-based; scales to `24 cookies` at ×2 (never converted).
 Recipes without the field simply omit the Makes line. Do **not** also hard-code a
 static "Yield:" line in the body — the dynamic field replaces it.
+
+## Allergens
+Add an `allergens` list to frontmatter to display allergen pills (with emoji icons) below
+the tags on the recipe page. Icons are defined in `_data/allergens.yml`. Common values:
+`wheat`, `gluten`, `soy`, `dairy`, `milk`, `eggs`, `nuts`, `tree-nuts`, `peanuts`, `fish`,
+`shellfish`, `sesame`, `mustard`. Do **not** put allergens in the Notes section body — use
+this frontmatter field instead.
+
+## Recipe photos
+Add `photo: "filename.jpg"` to frontmatter to display a hero photo at the top of the recipe.
+Store the image at `assets/images/recipes/<cuisine>/filename.jpg`. The path is derived
+automatically from `page.cuisine`. Supported formats: jpg, jpeg, png, webp.
 
 ## Cuisines (folder names)
 - italian

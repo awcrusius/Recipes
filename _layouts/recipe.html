@@ -28,6 +28,12 @@
         <p class="recipe-description">{{ page.description }}</p>
       {% endif %}
 
+      {% if page.photo %}
+        <div class="recipe-photo">
+          <img src="{{ '/assets/images/recipes/' | append: page.cuisine | append: '/' | append: page.photo | relative_url }}" alt="{{ page.title }}">
+        </div>
+      {% endif %}
+
       <div class="recipe-meta">
         {% if page.prep_time %}
           <div class="meta-item">
@@ -69,6 +75,15 @@
         </div>
       {% endif %}
 
+      {% if page.allergens %}
+        <div class="allergen-tags">
+          {% for allergen in page.allergens %}
+            {% assign icon = site.data.allergens[allergen] | default: "⚠️" %}
+            <span class="allergen-tag"><span class="allergen-icon">{{ icon }}</span>{{ allergen }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+
       {% assign recipe_yield = page.yield | default: page.makes %}
       {% if recipe_yield %}
         <p class="recipe-yield">Makes <span class="yield-amount" data-yield="{{ recipe_yield }}">{{ recipe_yield }}</span></p>
@@ -81,7 +96,6 @@
             <button type="button" data-scale="0.5">&times;0.5</button>
             <button type="button" data-scale="1" class="active">&times;1</button>
             <button type="button" data-scale="2">&times;2</button>
-            <button type="button" data-scale="3">&times;3</button>
             <button type="button" data-scale="custom">Custom</button>
           </div>
           <input type="number" id="custom-scale" class="custom-scale" min="0.1" step="0.1" value="1" style="display:none">
@@ -122,8 +136,7 @@
 
       var baseServings = parseFloat(controls.getAttribute('data-base-servings')) || 4;
 
-      // ---- Locate the ingredients list -------------------------------------
-      // First <ul>/<ol> after an <h2> whose text contains "Ingredients".
+      // Locate the ingredients list: first <ul>/<ol> after an <h2> containing "Ingredients"
       var headers = document.querySelectorAll('.recipe-body h2');
       var ingredientsList = null;
       for (var i = 0; i < headers.length; i++) {
@@ -138,15 +151,17 @@
       }
       if (!ingredientsList) return;
 
+      // Mark the list for CSS targeting (checkbox styling)
+      ingredientsList.classList.add('ingredients-list');
+
       var items = Array.prototype.slice.call(ingredientsList.querySelectorAll('li'));
 
-      // ---- Quantity parsing -------------------------------------------------
+      // ---- Quantity parsing ---------------------------------------------------
       var fractionMap = {
         '½': 0.5, '⅓': 1/3, '⅔': 2/3, '¼': 0.25, '¾': 0.75,
         '⅛': 0.125, '⅜': 0.375, '⅝': 0.625, '⅞': 0.875
       };
 
-      // Leading quantity: "1 1/2", "1/2", "2½", "0.5", "2", "½"
       var qtyPattern = /^(\d+\s+\d+\/\d+|\d+\/\d+|\d+\.\d+|\d+\s*[½⅓⅔¼¾⅛⅜⅝⅞]|\d+|[½⅓⅔¼¾⅛⅜⅝⅞])/;
 
       function parseQty(str) {
@@ -162,8 +177,7 @@
         return isNaN(n) ? null : n;
       }
 
-      // ---- Unit definitions -------------------------------------------------
-      // Canonical bases: mass -> grams, volume -> millilitres.
+      // ---- Unit definitions --------------------------------------------------
       var MASS = {
         'mg': 0.001, 'g': 1, 'gram': 1, 'grams': 1, 'gr': 1, 'kg': 1000,
         'oz': 28.3495, 'ounce': 28.3495, 'ounces': 28.3495,
@@ -177,22 +191,17 @@
         'cup': 236.588, 'cups': 236.588,
         'floz': 29.5735, 'fl-oz': 29.5735
       };
-      // Which system each source unit belongs to (used only for the default toggle).
-      var IMPERIAL_UNITS = { 'oz':1,'ounce':1,'ounces':1,'lb':1,'lbs':1,'pound':1,'pounds':1,
+      var IMPERIAL_UNITS = {
+        'oz':1,'ounce':1,'ounces':1,'lb':1,'lbs':1,'pound':1,'pounds':1,
         'tsp':1,'teaspoon':1,'teaspoons':1,'tbsp':1,'tablespoon':1,'tablespoons':1,
-        'cup':1,'cups':1,'floz':1,'fl-oz':1 };
+        'cup':1,'cups':1,'floz':1,'fl-oz':1
+      };
 
-      function normUnit(raw) {
-        return raw.toLowerCase().replace(/\.$/, '');
-      }
+      function normUnit(raw) { return raw.toLowerCase().replace(/\.$/, ''); }
 
-      // Tally source units to pick a sensible default system.
       var metricCount = 0, imperialCount = 0;
       function markSystem(u) { if (IMPERIAL_UNITS[u]) imperialCount++; else metricCount++; }
 
-      // ---- Parse a "quantity unit name" string -----------------------------
-      // tally: only the main ingredient list should influence the default
-      // metric/imperial choice (per-step lines & yield duplicate/don't count).
       function parseQtyUnitName(text, tally) {
         text = (text || '').replace(/\s+/g, ' ').trim();
         var m = text.match(qtyPattern);
@@ -201,8 +210,6 @@
         var qty = parseQty(m[0].trim());
         var rest = text.slice(m[0].length).replace(/^\s+/, '');
 
-        // Try to read a unit token (handle two-word "fl oz"). The name is
-        // simply whatever follows the unit, with internal spacing preserved.
         var dim = null, baseFactor = null, name = rest;
         var tokenMatch = rest.match(/^([a-zA-Z]+\.?)(?:\s+(.*))?$/);
         if (tokenMatch) {
@@ -226,20 +233,18 @@
 
         return {
           qty: qty,
-          dim: dim,                       // 'mass' | 'volume' | null (count)
-          base: dim ? qty * baseFactor : null, // canonical g or mL at x1
+          dim: dim,
+          base: dim ? qty * baseFactor : null,
           name: name.replace(/^\s+/, '')
         };
       }
 
-      // Parse an ingredient <li>, keeping a reference to the element to update.
       function parseIngredient(li, tally) {
         var r = parseQtyUnitName(li.textContent, tally);
         r.li = li;
         return r;
       }
 
-      // Render a parsed amount to a display string for the given scale/system.
       function renderAmount(p, scaleFactor, system) {
         if (p.qty === null) return p.raw;
         if (p.dim) {
@@ -249,12 +254,27 @@
         return format(p.qty * scaleFactor, null) + (p.name ? ' ' + p.name : '');
       }
 
-      // ---- Parse the main ingredient list ----------------------------------
+      // ---- Parse the main ingredient list ------------------------------------
       var parsed = items.map(function (li) { return parseIngredient(li, true); });
 
-      // ---- Also parse per-step ingredient sub-lists ------------------------
-      // Steps may carry a nested <ul> of the ingredients used in that step.
-      // Find the Instructions <ol>, then its nested "ol > li > ul > li" items.
+      // Inject checkboxes into each main ingredient <li>
+      parsed.forEach(function (ing) {
+        var span = document.createElement('span');
+        span.className = 'ing-text';
+        span.textContent = ing.li.textContent;
+        var checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'ing-check';
+        var label = document.createElement('label');
+        label.className = 'ing-row';
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        ing.li.innerHTML = '';
+        ing.li.appendChild(label);
+        ing.span = span;
+      });
+
+      // ---- Parse per-step ingredient sub-lists -------------------------------
       var instructionsList = null;
       for (var h = 0; h < headers.length; h++) {
         if (/instructions/i.test(headers[h].textContent)) {
@@ -272,7 +292,7 @@
         });
       }
 
-      // ---- Number formatting ------------------------------------------------
+      // ---- Number formatting -------------------------------------------------
       var FRACTIONS = [[1,8],[1,4],[1,3],[3,8],[1,2],[5,8],[2,3],[3,4],[7,8]];
 
       function asFraction(n) {
@@ -300,7 +320,7 @@
         return trimDecimal(n);
       }
 
-      // ---- Convert a canonical base value to a target system ----------------
+      // ---- Convert to target system ------------------------------------------
       function present(dim, baseValue, scaleFactor, system) {
         var v = baseValue * scaleFactor;
         if (dim === 'mass') {
@@ -311,7 +331,6 @@
           if (v >= 1000) return { qty: v / 1000, unit: 'kg' };
           return { qty: v, unit: 'g' };
         }
-        // volume
         if (system === 'imperial') {
           if (v < 15) return { qty: v / 4.92892, unit: 'tsp' };
           if (v < 60) return { qty: v / 14.7868, unit: 'tbsp' };
@@ -321,7 +340,7 @@
         return { qty: v, unit: 'mL' };
       }
 
-      // ---- Optional yield / makes amount -----------------------------------
+      // ---- Optional yield / makes -------------------------------------------
       var yieldEl = document.querySelector('.yield-amount');
       var yieldData = yieldEl ? parseQtyUnitName(yieldEl.getAttribute('data-yield'), false) : null;
 
@@ -330,8 +349,9 @@
 
       function render() {
         parsed.forEach(function (ing) {
-          if (ing.qty === null) return; // no leading quantity, leave untouched
-          ing.li.textContent = renderAmount(ing, state.scale, state.system);
+          if (ing.qty === null) return;
+          var target = ing.span || ing.li;
+          target.textContent = renderAmount(ing, state.scale, state.system);
         });
         updateYield();
       }
@@ -348,7 +368,7 @@
         }
       }
 
-      // ---- Wire up the controls --------------------------------------------
+      // ---- Wire up controls -------------------------------------------------
       var scaleButtons = document.getElementById('scale-buttons');
       var customInput = document.getElementById('custom-scale');
       var unitToggle = document.getElementById('unit-toggle');
@@ -386,7 +406,6 @@
         render();
       });
 
-      // Reflect the default system in the toggle, then do the first render.
       var defaultBtn = unitToggle.querySelector('button[data-system="' + state.system + '"]');
       setActive(unitToggle, defaultBtn);
       render();

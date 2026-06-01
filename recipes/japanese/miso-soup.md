@@ -8,6 +8,7 @@ prep_time: 5
 cook_time: 10
 total_time: 15
 tags: [soup, quick, tofu, vegan, umami]
+allergens: [soy]
 description: "A simple, warming Japanese soup made with dashi, white miso, silken tofu, and wakame."
 ---
 
