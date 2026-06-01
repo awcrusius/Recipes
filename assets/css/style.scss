@@ -244,18 +244,6 @@ a:hover { text-decoration: underline; }
   font-size: 0.78rem;
 }
 
-/* Yield / makes line */
-.recipe-yield {
-  margin: 0 0 1rem;
-  font-size: 0.95rem;
-  color: var(--color-muted);
-}
-
-.recipe-yield .yield-amount {
-  font-weight: 700;
-  color: var(--color-text);
-}
-
 /* Recipe controls: scale + units */
 .recipe-controls {
   display: flex;
@@ -366,8 +354,8 @@ a:hover { text-decoration: underline; }
 .scale-value {
   flex: 0 0 auto;
   box-sizing: content-box;  /* width below is the content area only */
-  width: 5ch;               /* JS grows this to fit longer values */
-  min-width: 5ch;           /* never narrower than "00000" */
+  width: 4ch;               /* JS grows this to fit longer values */
+  min-width: 4ch;           /* never narrower than "0.00" */
   padding: 0.3rem 1ch;      /* ~one "0" of breathing room each side */
   text-align: center;
   font-size: 0.95rem;

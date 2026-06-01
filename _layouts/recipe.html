@@ -93,10 +93,6 @@
       {% endif %}
 
       {% assign recipe_yield = page.yield | default: page.makes %}
-      {% if recipe_yield %}
-        <p class="recipe-yield">Makes <span class="yield-amount" data-yield="{{ recipe_yield }}">{{ recipe_yield }}</span></p>
-      {% endif %}
-
       <div class="recipe-controls no-print" data-base-servings="{{ page.servings | default: 4 }}">
         <div class="control-group">
           <span class="control-label">Scale</span>
@@ -105,11 +101,11 @@
             <span class="scale-field">
               <span class="scale-times" aria-hidden="true">&times;</span>
               <input type="text" inputmode="decimal" class="scale-value" id="scale-value"
-                     value="1" size="5" aria-label="Scale factor" autocomplete="off">
+                     value="1" size="4" aria-label="Scale factor" autocomplete="off">
             </span>
             <button type="button" id="scale-plus" aria-label="Increase scale">+</button>
           </div>
-          <span class="yield-readout" id="yield-readout"></span>
+          <span class="yield-readout" id="yield-readout"{% if recipe_yield %} data-yield="{{ recipe_yield }}"{% endif %}></span>
         </div>
         <div class="control-group">
           <span class="control-label">Units</span>
@@ -351,8 +347,11 @@
       }
 
       // ---- Optional yield / makes -------------------------------------------
-      var yieldEl = document.querySelector('.yield-amount');
-      var yieldData = yieldEl ? parseQtyUnitName(yieldEl.getAttribute('data-yield'), false) : null;
+      // The total yield lives on the servings readout; per-serving size is the
+      // total divided by the base servings (so it stays constant as you scale).
+      var readoutEl = document.getElementById('yield-readout');
+      var yieldRaw = readoutEl ? readoutEl.getAttribute('data-yield') : null;
+      var yieldData = yieldRaw ? parseQtyUnitName(yieldRaw, false) : null;
 
       // ---- Render -----------------------------------------------------------
       var state = { scale: 1, system: imperialCount > metricCount ? 'imperial' : 'metric' };
@@ -367,15 +366,15 @@
       }
 
       function updateYield() {
-        var readout = document.getElementById('yield-readout');
-        if (readout) {
-          var n = baseServings * state.scale;
-          var rounded = parseFloat(n.toFixed(2)).toString();
-          readout.textContent = '≈ ' + rounded + ' serving' + (n === 1 ? '' : 's');
+        if (!readoutEl) return;
+        var n = baseServings * state.scale;
+        var rounded = parseFloat(n.toFixed(2)).toString();
+        var text = '≈ ' + rounded + ' serving' + (n === 1 ? '' : 's');
+        if (yieldData && yieldData.qty !== null && baseServings > 0) {
+          // 1 / baseServings turns the total yield into a single serving's size.
+          text += ' (' + renderAmount(yieldData, 1 / baseServings, state.system) + ' each)';
         }
-        if (yieldEl && yieldData && yieldData.qty !== null) {
-          yieldEl.textContent = renderAmount(yieldData, state.scale, state.system);
-        }
+        readoutEl.textContent = text;
       }
 
       // ---- Wire up controls -------------------------------------------------
@@ -398,8 +397,8 @@
         return Number.isInteger(n) ? String(n) : parseFloat(n.toFixed(2)).toString();
       }
 
-      // Grow the input to fit its content, but never narrower than "00000".
-      var SCALE_MIN_CHARS = 5;
+      // Grow the input to fit its content, but never narrower than "0.00".
+      var SCALE_MIN_CHARS = 4;
       function sizeScaleInput() {
         var len = Math.max(scaleValue.value.length, SCALE_MIN_CHARS);
         scaleValue.style.width = len + 'ch';
