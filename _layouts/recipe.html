@@ -69,17 +69,27 @@
         </div>
       {% endif %}
 
-      <div class="serving-scaler no-print">
-        <label for="servings">Servings:</label>
-        <input
-          type="number"
-          id="servings"
-          value="{{ page.servings | default: 4 }}"
-          min="1"
-          max="100"
-          data-base="{{ page.servings | default: 4 }}"
-        >
-        <button onclick="window.print()" class="print-btn">Print Recipe</button>
+      <div class="recipe-controls no-print" data-base-servings="{{ page.servings | default: 4 }}">
+        <div class="control-group">
+          <span class="control-label">Scale</span>
+          <div class="btn-group" id="scale-buttons">
+            <button type="button" data-scale="0.5">&times;0.5</button>
+            <button type="button" data-scale="1" class="active">&times;1</button>
+            <button type="button" data-scale="2">&times;2</button>
+            <button type="button" data-scale="3">&times;3</button>
+            <button type="button" data-scale="custom">Custom</button>
+          </div>
+          <input type="number" id="custom-scale" class="custom-scale" min="0.1" step="0.1" value="1" style="display:none">
+          <span class="yield-readout" id="yield-readout"></span>
+        </div>
+        <div class="control-group">
+          <span class="control-label">Units</span>
+          <div class="btn-group" id="unit-toggle">
+            <button type="button" data-system="metric">Metric</button>
+            <button type="button" data-system="imperial">Imperial</button>
+          </div>
+        </div>
+        <button onclick="window.print()" class="print-btn">Print</button>
       </div>
 
       <div class="recipe-body">
@@ -102,12 +112,13 @@
 
   <script>
     (function () {
-      var input = document.getElementById('servings');
-      if (!input) return;
+      var controls = document.querySelector('.recipe-controls');
+      if (!controls) return;
 
-      var baseServings = parseFloat(input.getAttribute('data-base')) || 4;
+      var baseServings = parseFloat(controls.getAttribute('data-base-servings')) || 4;
 
-      // Find the ingredients list: first <ul> after an <h2> containing "Ingredients"
+      // ---- Locate the ingredients list -------------------------------------
+      // First <ul>/<ol> after an <h2> whose text contains "Ingredients".
       var headers = document.querySelectorAll('.recipe-body h2');
       var ingredientsList = null;
       for (var i = 0; i < headers.length; i++) {
@@ -116,96 +127,224 @@
           while (next && next.tagName !== 'UL' && next.tagName !== 'OL') {
             next = next.nextElementSibling;
           }
-          if (next) {
-            ingredientsList = next;
-          }
+          ingredientsList = next;
           break;
         }
       }
-
       if (!ingredientsList) return;
 
-      var items = ingredientsList.querySelectorAll('li');
+      var items = Array.prototype.slice.call(ingredientsList.querySelectorAll('li'));
 
-      // Parse leading number or fraction from text (e.g. "2", "1/2", "1 1/2")
+      // ---- Quantity parsing -------------------------------------------------
       var fractionMap = {
         '½': 0.5, '⅓': 1/3, '⅔': 2/3, '¼': 0.25, '¾': 0.75,
         '⅛': 0.125, '⅜': 0.375, '⅝': 0.625, '⅞': 0.875
       };
 
-      function parseFraction(str) {
+      // Leading quantity: "1 1/2", "1/2", "2½", "0.5", "2", "½"
+      var qtyPattern = /^(\d+\s+\d+\/\d+|\d+\/\d+|\d+\.\d+|\d+\s*[½⅓⅔¼¾⅛⅜⅝⅞]|\d+|[½⅓⅔¼¾⅛⅜⅝⅞])/;
+
+      function parseQty(str) {
         str = str.trim();
-        // Unicode fractions
-        for (var uc in fractionMap) {
-          if (str === uc) return fractionMap[uc];
-        }
-        // Slash fraction like "1/2"
-        var slashMatch = str.match(/^(\d+)\/(\d+)$/);
-        if (slashMatch) return parseInt(slashMatch[1]) / parseInt(slashMatch[2]);
-        // Plain number
-        var num = parseFloat(str);
-        if (!isNaN(num)) return num;
-        return null;
+        var compound = str.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+        if (compound) return parseInt(compound[1], 10) + parseInt(compound[2], 10) / parseInt(compound[3], 10);
+        var withUnicode = str.match(/^(\d+)\s*([½⅓⅔¼¾⅛⅜⅝⅞])$/);
+        if (withUnicode) return parseInt(withUnicode[1], 10) + fractionMap[withUnicode[2]];
+        if (fractionMap[str] !== undefined) return fractionMap[str];
+        var slash = str.match(/^(\d+)\/(\d+)$/);
+        if (slash) return parseInt(slash[1], 10) / parseInt(slash[2], 10);
+        var n = parseFloat(str);
+        return isNaN(n) ? null : n;
       }
 
-      // Leading quantity pattern: optional whole number, optional fraction/slash-fraction
-      // Captures: "2", "1/2", "1 1/2", "½", "2½"
-      var qtyPattern = /^(\d+\s+\d+\/\d+|\d+\/\d+|\d+[½⅓⅔¼¾⅛⅜⅝⅞]|\d+\.\d+|\d+|[½⅓⅔¼¾⅛⅜⅝⅞])/u;
+      // ---- Unit definitions -------------------------------------------------
+      // Canonical bases: mass -> grams, volume -> millilitres.
+      var MASS = {
+        'mg': 0.001, 'g': 1, 'gram': 1, 'grams': 1, 'gr': 1, 'kg': 1000,
+        'oz': 28.3495, 'ounce': 28.3495, 'ounces': 28.3495,
+        'lb': 453.592, 'lbs': 453.592, 'pound': 453.592, 'pounds': 453.592
+      };
+      var VOLUME = {
+        'ml': 1, 'milliliter': 1, 'millilitre': 1, 'milliliters': 1, 'millilitres': 1,
+        'cc': 1, 'l': 1000, 'liter': 1000, 'litre': 1000, 'liters': 1000, 'litres': 1000,
+        'tsp': 4.92892, 'teaspoon': 4.92892, 'teaspoons': 4.92892,
+        'tbsp': 14.7868, 'tablespoon': 14.7868, 'tablespoons': 14.7868,
+        'cup': 236.588, 'cups': 236.588,
+        'floz': 29.5735, 'fl-oz': 29.5735
+      };
+      // Which system each source unit belongs to (used only for the default toggle).
+      var IMPERIAL_UNITS = { 'oz':1,'ounce':1,'ounces':1,'lb':1,'lbs':1,'pound':1,'pounds':1,
+        'tsp':1,'teaspoon':1,'teaspoons':1,'tbsp':1,'tablespoon':1,'tablespoons':1,
+        'cup':1,'cups':1,'floz':1,'fl-oz':1 };
 
-      // Store original text for each item
-      var originals = Array.prototype.map.call(items, function (li) {
-        return li.textContent;
+      function normUnit(raw) {
+        return raw.toLowerCase().replace(/\.$/, '');
+      }
+
+      // Tally source units to pick a sensible default system.
+      var metricCount = 0, imperialCount = 0;
+      function markSystem(u) { if (IMPERIAL_UNITS[u]) imperialCount++; else metricCount++; }
+
+      // ---- Parse every ingredient once -------------------------------------
+      var parsed = items.map(function (li) {
+        var text = li.textContent.replace(/\s+/g, ' ').trim();
+        var m = text.match(qtyPattern);
+        if (!m) return { li: li, qty: null, raw: text };
+
+        var qty = parseQty(m[0].trim());
+        var rest = text.slice(m[0].length).replace(/^\s+/, '');
+
+        // Try to read a unit token (handle two-word "fl oz"). The name is
+        // simply whatever follows the unit, with internal spacing preserved.
+        var dim = null, baseFactor = null, name = rest;
+        var tokenMatch = rest.match(/^([a-zA-Z]+\.?)(?:\s+(.*))?$/);
+        if (tokenMatch) {
+          var u1 = normUnit(tokenMatch[1]);
+          var remainder = tokenMatch[2] || '';
+          var flMatch = remainder.match(/^([a-zA-Z]+\.?)(?:\s+(.*))?$/);
+          if (u1 === 'fl' && flMatch && normUnit(flMatch[1]) === 'oz') {
+            dim = 'volume'; baseFactor = VOLUME['floz'];
+            name = flMatch[2] || '';
+            markSystem('floz');
+          } else if (MASS[u1]) {
+            dim = 'mass'; baseFactor = MASS[u1];
+            name = remainder;
+            markSystem(u1);
+          } else if (VOLUME[u1]) {
+            dim = 'volume'; baseFactor = VOLUME[u1];
+            name = remainder;
+            markSystem(u1);
+          }
+        }
+
+        return {
+          li: li,
+          qty: qty,
+          dim: dim,                       // 'mass' | 'volume' | null (count)
+          base: dim ? qty * baseFactor : null, // canonical g or mL at x1
+          name: name.replace(/^\s+/, '')
+        };
       });
 
-      function formatNumber(n) {
-        // Return as fraction string if close to common fractions, else decimal
-        var fracs = [
-          [1, 8], [1, 4], [1, 3], [3, 8], [1, 2],
-          [5, 8], [2, 3], [3, 4], [7, 8]
-        ];
-        // Try to express as whole + fraction
-        var whole = Math.floor(n);
+      // ---- Number formatting ------------------------------------------------
+      var FRACTIONS = [[1,8],[1,4],[1,3],[3,8],[1,2],[5,8],[2,3],[3,4],[7,8]];
+
+      function asFraction(n) {
+        var whole = Math.floor(n + 1e-9);
         var rem = n - whole;
-        if (rem < 0.04) return whole === 0 ? '' : String(whole);
-        for (var i = 0; i < fracs.length; i++) {
-          var f = fracs[i][0] / fracs[i][1];
-          if (Math.abs(rem - f) < 0.04) {
-            var fracStr = fracs[i][0] + '/' + fracs[i][1];
-            return whole > 0 ? whole + ' ' + fracStr : fracStr;
+        if (rem < 0.04) return whole === 0 ? '0' : String(whole);
+        for (var i = 0; i < FRACTIONS.length; i++) {
+          if (Math.abs(rem - FRACTIONS[i][0] / FRACTIONS[i][1]) < 0.045) {
+            var f = FRACTIONS[i][0] + '/' + FRACTIONS[i][1];
+            return whole > 0 ? whole + ' ' + f : f;
           }
         }
-        // Fallback: one decimal place, trim trailing zero
-        var rounded = Math.round(n * 10) / 10;
-        return String(rounded);
+        return trimDecimal(n);
       }
 
-      function scale(newServings) {
-        var ratio = newServings / baseServings;
-        items.forEach(function (li, idx) {
-          var orig = originals[idx];
-          var match = orig.match(qtyPattern);
-          if (!match) return; // no leading quantity, leave unchanged
-          var qtyStr = match[0].trim();
-          // Parse possibly compound quantity like "1 1/2"
-          var compoundMatch = qtyStr.match(/^(\d+)\s+(\d+\/\d+)$/);
-          var baseQty;
-          if (compoundMatch) {
-            baseQty = parseInt(compoundMatch[1]) + parseFraction(compoundMatch[2]);
-          } else {
-            baseQty = parseFraction(qtyStr);
+      function trimDecimal(n) {
+        var p = n >= 100 ? 0 : (n >= 10 ? 1 : 2);
+        return parseFloat(n.toFixed(p)).toString();
+      }
+
+      var FRACTION_UNITS = { 'tsp':1, 'tbsp':1, 'cup':1 };
+
+      function format(n, unit) {
+        if (FRACTION_UNITS[unit]) return asFraction(n);
+        return trimDecimal(n);
+      }
+
+      // ---- Convert a canonical base value to a target system ----------------
+      function present(dim, baseValue, scaleFactor, system) {
+        var v = baseValue * scaleFactor;
+        if (dim === 'mass') {
+          if (system === 'imperial') {
+            if (v >= 453.592) return { qty: v / 453.592, unit: 'lb' };
+            return { qty: v / 28.3495, unit: 'oz' };
           }
-          if (baseQty === null || baseQty === 0) return;
-          var scaled = baseQty * ratio;
-          var formatted = formatNumber(scaled);
-          // Replace the original quantity text in the ingredient string
-          li.textContent = formatted + (formatted ? orig.slice(match[0].length) : orig.slice(match[0].length));
-        });
+          if (v >= 1000) return { qty: v / 1000, unit: 'kg' };
+          return { qty: v, unit: 'g' };
+        }
+        // volume
+        if (system === 'imperial') {
+          if (v < 15) return { qty: v / 4.92892, unit: 'tsp' };
+          if (v < 60) return { qty: v / 14.7868, unit: 'tbsp' };
+          return { qty: v / 236.588, unit: 'cup' };
+        }
+        if (v >= 1000) return { qty: v / 1000, unit: 'L' };
+        return { qty: v, unit: 'mL' };
       }
 
-      input.addEventListener('input', function () {
-        var v = parseFloat(input.value);
-        if (!isNaN(v) && v > 0) scale(v);
+      // ---- Render -----------------------------------------------------------
+      var state = { scale: 1, system: imperialCount > metricCount ? 'imperial' : 'metric' };
+
+      function render() {
+        parsed.forEach(function (ing) {
+          if (ing.qty === null) return; // no leading quantity, leave untouched
+          var qtyStr, suffix;
+          if (ing.dim) {
+            var p = present(ing.dim, ing.base, state.scale, state.system);
+            qtyStr = format(p.qty, p.unit);
+            suffix = ' ' + p.unit + (ing.name ? ' ' + ing.name : '');
+          } else {
+            qtyStr = format(ing.qty * state.scale, null);
+            suffix = ing.name ? ' ' + ing.name : '';
+          }
+          ing.li.textContent = qtyStr + suffix;
+        });
+        updateYield();
+      }
+
+      function updateYield() {
+        var readout = document.getElementById('yield-readout');
+        if (!readout) return;
+        var n = baseServings * state.scale;
+        var rounded = parseFloat(n.toFixed(2)).toString();
+        readout.textContent = '≈ ' + rounded + ' serving' + (n === 1 ? '' : 's');
+      }
+
+      // ---- Wire up the controls --------------------------------------------
+      var scaleButtons = document.getElementById('scale-buttons');
+      var customInput = document.getElementById('custom-scale');
+      var unitToggle = document.getElementById('unit-toggle');
+
+      function setActive(group, btn) {
+        group.querySelectorAll('button').forEach(function (b) { b.classList.remove('active'); });
+        if (btn) btn.classList.add('active');
+      }
+
+      scaleButtons.addEventListener('click', function (e) {
+        var btn = e.target.closest('button');
+        if (!btn) return;
+        setActive(scaleButtons, btn);
+        if (btn.getAttribute('data-scale') === 'custom') {
+          customInput.style.display = '';
+          var v = parseFloat(customInput.value);
+          state.scale = (!isNaN(v) && v > 0) ? v : 1;
+        } else {
+          customInput.style.display = 'none';
+          state.scale = parseFloat(btn.getAttribute('data-scale'));
+        }
+        render();
       });
+
+      customInput.addEventListener('input', function () {
+        var v = parseFloat(customInput.value);
+        if (!isNaN(v) && v > 0) { state.scale = v; render(); }
+      });
+
+      unitToggle.addEventListener('click', function (e) {
+        var btn = e.target.closest('button');
+        if (!btn) return;
+        setActive(unitToggle, btn);
+        state.system = btn.getAttribute('data-system');
+        render();
+      });
+
+      // Reflect the default system in the toggle, then do the first render.
+      var defaultBtn = unitToggle.querySelector('button[data-system="' + state.system + '"]');
+      setActive(unitToggle, defaultBtn);
+      render();
     })();
   </script>
 </body>
