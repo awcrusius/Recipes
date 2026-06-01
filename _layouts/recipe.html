@@ -78,15 +78,18 @@
       {% endif %}
 
       {% if page.allergens %}
-        <div class="allergen-tags">
-          {% for allergen in page.allergens %}
-            {% assign icon_id = site.data.allergens[allergen] | default: "generic" %}
-            <span class="allergen-tag">
-              <svg class="allergen-icon" aria-hidden="true"><use href="#ai-{{ icon_id }}"></use></svg>
-              <span class="allergen-name">{{ allergen }}</span>
-            </span>
-          {% endfor %}
-        </div>
+        <section class="allergen-section" aria-label="Allergens">
+          <span class="allergen-label">Contains</span>
+          <div class="allergen-tags">
+            {% for allergen in page.allergens %}
+              {% assign icon_id = site.data.allergens[allergen] | default: "generic" %}
+              <span class="allergen-tag">
+                <svg class="allergen-icon" aria-hidden="true"><use href="#ai-{{ icon_id }}"></use></svg>
+                <span class="allergen-name">{{ allergen }}</span>
+              </span>
+            {% endfor %}
+          </div>
+        </section>
       {% endif %}
 
       {% assign recipe_yield = page.yield | default: page.makes %}
@@ -99,7 +102,11 @@
           <span class="control-label">Scale</span>
           <div class="scale-stepper" id="scale-stepper">
             <button type="button" id="scale-minus" aria-label="Decrease scale">&minus;</button>
-            <span class="scale-value" id="scale-value">&times;1</span>
+            <span class="scale-field">
+              <span class="scale-times" aria-hidden="true">&times;</span>
+              <input type="text" inputmode="decimal" class="scale-value" id="scale-value"
+                     value="1" aria-label="Scale factor" autocomplete="off">
+            </span>
             <button type="button" id="scale-plus" aria-label="Increase scale">+</button>
           </div>
           <span class="yield-readout" id="yield-readout"></span>
@@ -402,15 +409,36 @@
         return SCALE_STEPS[ni];
       }
 
-      function setScale(v) {
+      // Apply a scale without rewriting the input (so typing isn't interrupted).
+      function applyScale(v) {
         state.scale = v;
-        scaleValue.textContent = '×' + fmtScale(v);
         scaleMinus.disabled = (v <= SCALE_STEPS[0]);
         render();
       }
 
+      // Apply a scale and reflect it back into the input box (used by the steppers).
+      function setScale(v) {
+        applyScale(v);
+        scaleValue.value = fmtScale(v);
+      }
+
       scaleMinus.addEventListener('click', function () { setScale(stepScale(state.scale, -1)); });
       scalePlus.addEventListener('click', function () { setScale(stepScale(state.scale, 1)); });
+
+      // Free-form typing: live-update on input, normalise/revert on commit.
+      scaleValue.addEventListener('input', function () {
+        var v = parseFloat(scaleValue.value);
+        if (!isNaN(v) && v > 0) applyScale(v);
+      });
+      scaleValue.addEventListener('change', function () {
+        var v = parseFloat(scaleValue.value);
+        if (isNaN(v) || v <= 0) setScale(state.scale); // revert to last valid scale
+        else setScale(v);                              // normalise the display
+      });
+      scaleValue.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') scaleValue.blur();
+      });
+      scaleValue.addEventListener('focus', function () { scaleValue.select(); });
 
       unitToggle.addEventListener('click', function (e) {
         var btn = e.target.closest('button');
