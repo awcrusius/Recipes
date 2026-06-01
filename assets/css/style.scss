@@ -244,11 +244,11 @@ a:hover { text-decoration: underline; }
   font-size: 0.78rem;
 }
 
-/* Serving scaler */
-.serving-scaler {
+/* Recipe controls: scale + units */
+.recipe-controls {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 1rem 1.25rem;
   margin-bottom: 1.5rem;
   padding: 0.75rem 1rem;
   background: #f8f8f8;
@@ -257,24 +257,67 @@ a:hover { text-decoration: underline; }
   flex-wrap: wrap;
 }
 
-.serving-scaler label {
-  font-weight: 500;
-  font-size: 0.95rem;
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.serving-scaler input[type="number"] {
-  width: 5rem;
-  padding: 0.35rem 0.5rem;
-  font-size: 1rem;
+.control-label {
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.btn-group {
+  display: inline-flex;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #fff;
+}
+
+.btn-group button {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.9rem;
+  font-family: var(--font);
+  border: none;
+  border-right: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.btn-group button:last-child { border-right: none; }
+.btn-group button:hover { background: var(--color-accent-light); }
+
+.btn-group button.active {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.custom-scale {
+  width: 4.5rem;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.9rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   font-family: var(--font);
   text-align: center;
 }
 
+.yield-readout {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
 .print-btn {
   margin-left: auto;
-  padding: 0.35rem 0.9rem;
+  padding: 0.4rem 0.9rem;
   background: var(--color-accent);
   color: #fff;
   border: none;
@@ -335,6 +378,6 @@ a:hover { text-decoration: underline; }
 @media (max-width: 600px) {
   .recipe-title { font-size: 1.5rem; }
   .category-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-  .serving-scaler { gap: 0.5rem; }
+  .recipe-controls { gap: 0.65rem; }
   .print-btn { margin-left: 0; width: 100%; }
 }
