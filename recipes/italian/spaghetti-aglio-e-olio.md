@@ -8,6 +8,7 @@ prep_time: 5
 cook_time: 20
 total_time: 25
 tags: [pasta, quick, weeknight, garlic, vegetarian]
+allergens: [wheat]
 description: "A pantry-staple Italian classic — silky spaghetti tossed with golden garlic, olive oil, chili flakes, and parsley."
 ---
 

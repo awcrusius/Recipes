@@ -9,6 +9,7 @@ cook_time: 5
 total_time: 15
 yield: "250 mL"
 tags: [sauce, condiment, vegan, plant-based, dipping-sauce]
+allergens: [wheat, soy]
 description: "A lighter, sweeter, and smoother soy sauce — for dipping, dressing, and marinating Vietnamese-inspired dishes."
 ---
 
@@ -48,4 +49,3 @@ description: "A lighter, sweeter, and smoother soy sauce — for dipping, dressi
 - Serving size: 1 tbsp (15 mL); the recipe makes about 16 servings.
 - Taste before bottling and adjust the citric acid for extra tang or the sugar for sweetness.
 - For a smoother sauce, strain out the chilli and garlic solids after simmering.
-- **Allergens:** wheat, soy.
