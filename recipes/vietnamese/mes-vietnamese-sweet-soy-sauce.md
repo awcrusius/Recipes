@@ -16,26 +16,26 @@ description: "A lighter, sweeter, and smoother soy sauce — for dipping, dressi
 ## Ingredients
 
 - 90 g white sugar
-- 140 mL water
-- 30 mL white vinegar
-- 15 mL Golden Mountain Seasoning Sauce
+- 140 g boiling hot water
+- 30 g white vinegar
+- 20 g Golden Mountain Seasoning Sauce
 - 2 small fresh red Thai chillies, minced
 - 2 garlic cloves, minced
 - 1 g MSG (monosodium glutamate)
-- 1.5 g citric acid
+- 0.5 g citric acid
 - 0.5 g xanthan gum
 
 ## Instructions
 
-1. **Dissolve the sugar** — Combine the sugar and water in a small saucepan over medium-low heat. Stir until fully dissolved. Do not boil.
+1. **Dissolve the sugar** — Combine the sugar and water in a heat safe bowl. Stir until fully dissolved.
    - 90 g white sugar
-   - 140 mL water
+   - 140 mL boiling hot water
 2. **Add liquid seasonings** — Remove from heat and stir in the Golden Mountain Seasoning Sauce and white vinegar until combined.
    - 15 mL Golden Mountain Seasoning Sauce
    - 30 mL white vinegar
 3. **Add dry seasonings** — Stir in the MSG and citric acid until fully dissolved.
    - 1 g MSG (monosodium glutamate)
-   - 1.5 g citric acid
+   - 0.5 g citric acid
 4. **Prepare and infuse aromatics** — Finely mince the chillies and garlic (or blend to a rough paste). Stir into the sauce and return to low heat. Simmer gently for 3 minutes to infuse.
    - 2 small fresh red Thai chillies, minced
    - 2 garlic cloves, minced
