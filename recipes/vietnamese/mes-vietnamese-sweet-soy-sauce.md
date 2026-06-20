@@ -42,7 +42,7 @@ description: "A lighter, sweeter, and smoother soy sauce — for dipping, dressi
 5. **Cool** — Remove from heat and allow to cool to room temperature before adding the xanthan gum.
 6. **Add xanthan gum** — Whisk the xanthan gum into the cooled sauce vigorously until fully dissolved with no lumps. The sauce will thicken slightly.
    - 0.5 g xanthan gum
-7. **Bottle and refrigerate** — Pour into a clean 250 mL bottle. Refrigerate. Best within 1 year.
+7. **Bottle and refrigerate** — Pour into a clean bottle. Refrigerate. Best within 1 year.
 
 ## Notes
 
