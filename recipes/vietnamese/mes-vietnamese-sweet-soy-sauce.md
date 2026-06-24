@@ -41,7 +41,7 @@ description: "A lighter, sweeter, and smoother soy sauce — for dipping, dressi
    - 2 garlic cloves, minced
 5. **Cool** — Remove from heat and allow to cool to room temperature before adding the xanthan gum.
 6. **Add xanthan gum** — Whisk the xanthan gum into the cooled sauce vigorously until fully dissolved with no lumps. The sauce will thicken slightly.
-   - 0.5 g xanthan gum
+   - 0.125 g xanthan gum
 7. **Bottle and refrigerate** — Pour into a clean bottle. Refrigerate.
 
 ## Notes
