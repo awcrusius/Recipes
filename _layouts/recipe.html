@@ -114,7 +114,12 @@
             <button type="button" data-system="imperial">Imperial</button>
           </div>
         </div>
-        <button onclick="window.print()" class="print-btn">Print</button>
+        <div class="control-actions">
+          <button type="button" id="notes-btn" class="notes-btn">
+            <span id="notes-btn-label">Add to Notes</span>
+          </button>
+          <button onclick="window.print()" class="print-btn">Print</button>
+        </div>
       </div>
 
       <div class="recipe-body">
@@ -347,11 +352,24 @@
       }
 
       // ---- Optional yield / makes -------------------------------------------
-      // The total yield lives on the servings readout; per-serving size is the
-      // total divided by the base servings (so it stays constant as you scale).
+      // The total yield is authored on the servings readout. We derive the
+      // per-serving size ONCE from the exact total ÷ exact base servings and
+      // keep that as the source of truth, so the rounded servings *count* shown
+      // to the user never feeds back into the math. The overall output at any
+      // scale is then perServing × (exact servings) = perServing × baseServings × scale.
       var readoutEl = document.getElementById('yield-readout');
       var yieldRaw = readoutEl ? readoutEl.getAttribute('data-yield') : null;
-      var yieldData = yieldRaw ? parseQtyUnitName(yieldRaw, false) : null;
+      var totalYield = yieldRaw ? parseQtyUnitName(yieldRaw, false) : null;
+
+      var perServing = null;
+      if (totalYield && totalYield.qty !== null && baseServings > 0) {
+        perServing = {
+          qty: totalYield.qty / baseServings,
+          dim: totalYield.dim,
+          base: totalYield.base !== null ? totalYield.base / baseServings : null,
+          name: totalYield.name
+        };
+      }
 
       // ---- Render -----------------------------------------------------------
       var state = { scale: 1, system: imperialCount > metricCount ? 'imperial' : 'metric' };
@@ -367,12 +385,12 @@
 
       function updateYield() {
         if (!readoutEl) return;
-        var n = baseServings * state.scale;
-        var rounded = parseFloat(n.toFixed(2)).toString();
+        var n = baseServings * state.scale;            // exact servings at this scale
+        var rounded = parseFloat(n.toFixed(2)).toString(); // rounded for display only
         var text = '≈ ' + rounded + ' serving' + (n === 1 ? '' : 's');
-        if (yieldData && yieldData.qty !== null && baseServings > 0) {
-          // 1 / baseServings turns the total yield into a single serving's size.
-          text += ' (' + renderAmount(yieldData, 1 / baseServings, state.system) + ' each)';
+        if (perServing) {
+          // Per-serving size is scale-invariant; render the stored exact value.
+          text += ' (' + renderAmount(perServing, 1, state.system) + ' each)';
         }
         readoutEl.textContent = text;
       }
@@ -454,6 +472,83 @@
         setActive(unitToggle, btn);
         state.system = btn.getAttribute('data-system');
         render();
+      });
+
+      // ---- "Add to Notes" ----------------------------------------------------
+      // There is no public URL scheme that writes into Apple Notes or Google
+      // Keep, so the best a web page can do is hand the text to the OS share
+      // sheet (Notes/Keep appear there on iOS and Android) and fall back to the
+      // clipboard elsewhere. Lines are prefixed with ☐ so they read as a
+      // checklist; in Notes you can select them and tap the checklist button to
+      // turn them into real tickable items.
+      var notesBtn = document.getElementById('notes-btn');
+      var notesLabel = document.getElementById('notes-btn-label');
+      var RECIPE_TITLE = {{ page.title | jsonify }};
+
+      function buildIngredientText() {
+        var lines = [];
+        Array.prototype.forEach.call(ingredientsList.querySelectorAll('li'), function (li) {
+          var textEl = li.querySelector('.ing-text');
+          var txt = (textEl ? textEl.textContent : li.textContent).replace(/\s+/g, ' ').trim();
+          if (txt) lines.push('☐ ' + txt);
+        });
+
+        var meta = '×' + fmtScale(state.scale) + ' · ' +
+                   (state.system === 'imperial' ? 'Imperial' : 'Metric');
+        var servings = readoutEl ? readoutEl.textContent.replace(/^≈\s*/, '') : '';
+        if (servings) meta += ' · ' + servings;
+
+        return RECIPE_TITLE + ' — Ingredients\n' + meta + '\n\n' +
+               lines.join('\n') + '\n\n' + window.location.href;
+      }
+
+      var labelResetTimer = null;
+      function flashLabel(msg) {
+        clearTimeout(labelResetTimer);
+        notesLabel.textContent = msg;
+        labelResetTimer = setTimeout(function () {
+          notesLabel.textContent = 'Add to Notes';
+        }, 2600);
+      }
+
+      function copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          return navigator.clipboard.writeText(text);
+        }
+        // Fallback for older browsers / non-secure contexts.
+        return new Promise(function (resolve, reject) {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.top = '-1000px';
+          document.body.appendChild(ta);
+          ta.select();
+          var ok = false;
+          try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+          document.body.removeChild(ta);
+          ok ? resolve() : reject(new Error('copy failed'));
+        });
+      }
+
+      notesBtn.addEventListener('click', function () {
+        var text = buildIngredientText();
+        var title = RECIPE_TITLE + ' — Ingredients';
+
+        if (navigator.share) {
+          navigator.share({ title: title, text: text }).catch(function (err) {
+            // User dismissed the sheet: not an error, say nothing.
+            if (err && err.name === 'AbortError') return;
+            copyText(text)
+              .then(function () { flashLabel('Copied — paste into Notes'); })
+              .catch(function () { flashLabel('Could not share'); });
+          });
+          return;
+        }
+
+        copyText(text)
+          .then(function () { flashLabel('Copied — paste into Notes'); })
+          .catch(function () { flashLabel('Copy failed'); });
       });
 
       var defaultBtn = unitToggle.querySelector('button[data-system="' + state.system + '"]');
